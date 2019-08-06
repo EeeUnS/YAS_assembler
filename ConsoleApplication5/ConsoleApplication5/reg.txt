@@ -1,0 +1,21 @@
+# Execution begins at address 0
+.pos 0x117
+.align 8
+stop:
+	halt # sum(array, 4)
+	call stop 
+	irmovq $8, %r8 # sum(array, 4)
+	irmovq $1, %r9 # sum(array, 4)
+	xorq %rax, %rax # sum(array, 4)
+	andq %rsi, %rsi #sum(array, 4)
+	jmp test  # sum(array, 4)
+.align 8
+test: # Constant 8
+	mrmovq (%rdi) ,%r10
+	ret # Constant 8
+	irmovq $8, %r8 # Constant 8
+	irmovq $1, %r9 # Constant 1
+	xorq %rax, %rax # sum = 0
+	andq %rsi, %rsi # Set CC
+	jmp test # Goto test
+
