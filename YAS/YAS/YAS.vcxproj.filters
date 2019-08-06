@@ -15,10 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="reg.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="y86_64_to_endcoding.cpp">
+    <ClCompile Include="YAS_main.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

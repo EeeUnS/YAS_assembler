@@ -1,17 +1,19 @@
-ï»¿#pragma warning(disable : 4996)
+#pragma warning(disable : 4996)
 
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
 #include<ctype.h>
-#include<cinttypes>
+#include<inttypes.h>
+#define Label_n 20
+//const int Label_n = 20;
 
-const int Label_n = 20;
-// Y86-64 -> ê¸°ê³„ì–´ ë³€í™˜ê¸°
+
+// Y86-64 -> ±â°è¾î º¯È¯±â
 
 /*
-ìŠ¤í˜ì´ìŠ¤ë°”, ê°œí–‰ë¬¸ìë¥¼ ê¸°ì¤€ìœ¼ë¡œ ì½ê¸°ë•Œë¬¸ì—
-ì£¼ì„, ì¸ìŠ¤íŠ¸ëŸ­ì…˜ ,ë ˆì§€ìŠ¤í„°ë“¤ ì‚¬ì´ì—ëŠ” ìŠ¤í˜ì´ìŠ¤ë°”ê°€ í•˜ë‚˜ì”©ì„ ë“¤ì–´ê°€ì•¼í•©ë‹ˆë‹¤.
+½ºÆäÀÌ½º¹Ù, °³Çà¹®ÀÚ¸¦ ±âÁØÀ¸·Î ÀĞ±â¶§¹®¿¡
+ÁÖ¼®, ÀÎ½ºÆ®·°¼Ç ,·¹Áö½ºÅÍµé »çÀÌ¿¡´Â ½ºÆäÀÌ½º¹Ù°¡ ÇÏ³ª¾¿À» µé¾î°¡¾ßÇÕ´Ï´Ù.
 
 */
 
@@ -154,7 +156,7 @@ const char* instruction[] =
 	"popq"
 };
 
-const int Instruction_Encoding[]
+const int Instruction_Encoding[] =
 {
 	0x00,
 	0x10,
@@ -238,17 +240,17 @@ int find_reg(char reg[]);
 void reg_in();
 void read_label();
 uint64_t address = 0x100;
-FILE* file = stdin;
+FILE* file ;
 
 int main()
 {
 
-	FILE* TXT = fopen("reg.txt", "r") ;
+	FILE* TXT = fopen("reg.txt", "r");
 	file = TXT;
-		
+
 	read_label();
 	rewind(file);
-	
+
 	while (!feof(file))
 	{
 		insrtruction_to_encoding();
@@ -261,15 +263,15 @@ void insrtruction_to_encoding()
 {
 	char __instruction[10] = { 0, };
 	const int buffer = 10;
-	int eof = fscanf_s(file,"%s", __instruction, sizeof(__instruction));
+	int eof = fscanf_s(file, "%s", __instruction, sizeof(__instruction));
 
 	int ins_len = strlen(__instruction);
-	// # ì±™ê¸°ê¸°.
-	
-	if(__instruction[0] == '#')
+	// # Ã¬±â±â.
+
+	if (__instruction[0] == '#')
 	{
 		del_comment();
-		
+
 
 		printf("\n");
 		return;
@@ -315,7 +317,7 @@ void insrtruction_to_encoding()
 	for (int i = 0; i < 27; i++)
 	{
 		size_t len = strlen(instruction[i]);
-		if (!strncmp(__instruction, instruction[i], len))//ê°™ì„ë•Œ 0ë°˜í™˜
+		if (!strncmp(__instruction, instruction[i], len))//°°À»¶§ 0¹İÈ¯
 		{
 			index = i;
 			break;
@@ -352,12 +354,12 @@ void insrtruction_to_encoding()
 		address += 2;
 		break;
 		//30
-	case irmovq:  //ìˆ˜ì •
+	case irmovq:  //¼öÁ¤
 	{
 		Print_Encoding_Instruction(index);
 		printf("F");
 
-		uint64_t D = get_integer(); //ì •ìˆ˜ê°€ ì•ˆë“¤ì–´ì˜¤ëŠ”ê²½ìš°
+		uint64_t D = get_integer(); //Á¤¼ö°¡ ¾Èµé¾î¿À´Â°æ¿ì
 		D = little_endian(D);
 
 
@@ -366,7 +368,7 @@ void insrtruction_to_encoding()
 		address += 10;
 		break;
 	}	//40
-	case rmmovq: //ìˆ˜ì •
+	case rmmovq: //¼öÁ¤
 	{
 		Print_Encoding_Instruction(index);
 		reg_in(); //rA
@@ -374,18 +376,18 @@ void insrtruction_to_encoding()
 
 		char line[20];
 
-		fscanf_s(file, "%s", line, sizeof(line)); //(%sì…ë ¥)
+		fscanf_s(file, "%s", line, sizeof(line)); //(%sÀÔ·Â)
 		uint64_t D = atoi(line);
-		
+
 		int i = 0;
 		for (; line[i] != '('; i++)
 		{
 			;
 		}
 		char rB[5] = { 0, };
-		for (int j = 0; line[i] != ')' ; j++, i++)
+		for (int j = 0; line[i] != ')'; j++, i++)
 		{
-			rB[j] = line[i]; //  lineì— (ë¥¼ ì½ê¸°ë•Œë¬¸ì— index ëŠ” 1ë¶€í„°. ì´ê²Œì•„ë‹ˆë©´ ì¸í’‹ê°’ì—ëŸ¬ì„
+			rB[j] = line[i]; //  line¿¡ (¸¦ ÀĞ±â¶§¹®¿¡ index ´Â 1ºÎÅÍ. ÀÌ°Ô¾Æ´Ï¸é ÀÎÇ²°ª¿¡·¯ÀÓ
 		}
 		int rB_index = find_reg(rB);
 
@@ -402,7 +404,7 @@ void insrtruction_to_encoding()
 
 		char line[20];
 
-		fscanf_s(file, "%s", line, sizeof(line)); //(%sì…ë ¥)
+		fscanf_s(file, "%s", line, sizeof(line)); //(%sÀÔ·Â)
 		uint64_t D = atoi(line);
 
 		int i = 0;
@@ -414,7 +416,7 @@ void insrtruction_to_encoding()
 		i++;
 		for (int j = 0; line[i] != ')'; j++, i++)
 		{
-			rB[j] = line[i]; //  lineì— (ë¥¼ ì½ê¸°ë•Œë¬¸ì— index ëŠ” 1ë¶€í„°. ì´ê²Œì•„ë‹ˆë©´ ì¸í’‹ê°’ì—ëŸ¬ì„
+			rB[j] = line[i]; //  line¿¡ (¸¦ ÀĞ±â¶§¹®¿¡ index ´Â 1ºÎÅÍ. ÀÌ°Ô¾Æ´Ï¸é ÀÎÇ²°ª¿¡·¯ÀÓ
 		}
 
 
@@ -437,36 +439,36 @@ void insrtruction_to_encoding()
 	case jg:
 		//80
 	case call:
-	{	//ì£¼ì†Œê°’ì„ ì €ì¥í•´ì„œ ì¶œë ¥í•´ì•¼ë¨ ì”¹í—¬
+	{	//ÁÖ¼Ò°ªÀ» ÀúÀåÇØ¼­ Ãâ·ÂÇØ¾ßµÊ ¾ÃÇï
 		Print_Encoding_Instruction(index);
 		char line[20];
 		fscanf_s(file, "%s", line, sizeof(line));
 		int line_len = strlen(line);
-		
-			/*__instruction[ins_len - 1] = '\0';
-			strcpy(Label[Label_index], __instruction);
-			Label_address[Label_index] = address;
-			Label_index++;*/
-			line[line_len] = '\0';
-			int i = 0;
-			for (; i < Label_index; i++)
-			{
-				if (strcmp(line, Label[i]) == 0)
-				{
-					break;
-				}
-			}
 
-			if (i == Label_index)
+		/*__instruction[ins_len - 1] = '\0';
+		strcpy(Label[Label_index], __instruction);
+		Label_address[Label_index] = address;
+		Label_index++;*/
+		line[line_len] = '\0';
+		int i = 0;
+		for (; i < Label_index; i++)
+		{
+			if (strcmp(line, Label[i]) == 0)
 			{
-				input_error();
-				return;
+				break;
 			}
-			uint64_t _address = Label_address[i];
-			_address = little_endian(_address);
-			printf("%08" PRIx64, _address);
-			printf("\n");
-		
+		}
+
+		if (i == Label_index)
+		{
+			input_error();
+			return;
+		}
+		uint64_t _address = Label_address[i];
+		_address = little_endian(_address);
+		printf("%08" PRIx64, _address);
+		printf("\n");
+
 		address += 9;
 		break;
 	}
@@ -477,7 +479,7 @@ void insrtruction_to_encoding()
 		printf("F\n");
 		address += 2;
 		break;
-	default: //ë¼ë²¨ or ì¸í’‹ ì—ëŸ¬
+	default: //¶óº§ or ÀÎÇ² ¿¡·¯
 	{
 		if (__instruction[ins_len - 1] == ':')
 		{
@@ -499,7 +501,7 @@ void insrtruction_to_encoding()
 			//input_error();
 		}
 
-		
+
 		//printf("\n");
 
 
@@ -555,7 +557,7 @@ int find_reg(char _reg[])
 		{
 			return index;
 		}
-	} // ìƒìˆ˜ê°’ $8g
+	} // »ó¼ö°ª $8g
 
 
 
@@ -565,16 +567,16 @@ int find_reg(char _reg[])
 	return -1;
 }
 
-void reg_in() //í•œê°œë¡œ ìƒê°í•˜ê³  ë‘˜ë‹¤ ì²˜ë¦¬í•˜ì! ì‰¼í‘œë–¼ê¸° + ê³µë°±ì²˜ë¦¬ ì˜¤ë¥˜ ì ¤ë‚˜ê¸°ì‰¬ìš´ê³³
+void reg_in() //ÇÑ°³·Î »ı°¢ÇÏ°í µÑ´Ù Ã³¸®ÇÏÀÚ! ½°Ç¥¶¼±â + °ø¹éÃ³¸® ¿À·ù Á©³ª±â½¬¿î°÷
 {
-	char line[10] = { 0, }; //ë¼ì¸ì„ ì½ì–´ì„œ ìˆœìˆ˜ regë§Œ ì¶”ì¶œí•´ _regì— ë„£ëŠ”ë‹¤.
+	char line[10] = { 0, }; //¶óÀÎÀ» ÀĞ¾î¼­ ¼ø¼ö reg¸¸ ÃßÃâÇØ _reg¿¡ ³Ö´Â´Ù.
 	char _reg[10] = { 0, };
 
 	fscanf_s(file, "%s", line, sizeof(line));
 
 	int line_i = 0;
-	// 1 ì‰¼í‘œë§Œ ì½ì€ê²½ìš° , 2 ì‰¼í‘œ í¬í•¨í•´ì„œ ë ˆì§€ë¥¼ ì½ì„ ê²½ìš°  
-	//3. ë ˆì§€ë’¤ì˜ ì£¼ì„ì„ ì½ì€ ê²½ìš°. 4. ë§¨ë’¤ì— ì‰¼í‘œê°€ ë“¤ì–´ê°„ê²½ìš°.
+	// 1 ½°Ç¥¸¸ ÀĞÀº°æ¿ì , 2 ½°Ç¥ Æ÷ÇÔÇØ¼­ ·¹Áö¸¦ ÀĞÀ» °æ¿ì  
+	//3. ·¹ÁöµÚÀÇ ÁÖ¼®À» ÀĞÀº °æ¿ì. 4. ¸ÇµÚ¿¡ ½°Ç¥°¡ µé¾î°£°æ¿ì.
 	if (line[0] == ',' && line[1] == '\0')
 	{
 		fscanf_s(file, "%s", line, sizeof(line));
@@ -590,7 +592,7 @@ void reg_in() //í•œê°œë¡œ ìƒê°í•˜ê³  ë‘˜ë‹¤ ì²˜ë¦¬í•˜ì! ì‰¼í‘œë–¼ê¸° + ê³µë°
 		line_i++;
 	}
 
-	int reg_index = 0;//ì…ë ¥ì´ ì œëŒ€ë¡œ ë˜ì§€ì•Šì„ì‹œ ì—ëŸ¬
+	int reg_index = 0;//ÀÔ·ÂÀÌ Á¦´ë·Î µÇÁö¾ÊÀ»½Ã ¿¡·¯
 	for (; (!isspace(line[line_i])) && (line[line_i] != '#') && (line[line_i] != ',') && (line[line_i] != '\0'); line_i++, reg_index++)
 	{
 		_reg[reg_index] = line[line_i];
@@ -600,22 +602,22 @@ void reg_in() //í•œê°œë¡œ ìƒê°í•˜ê³  ë‘˜ë‹¤ ì²˜ë¦¬í•˜ì! ì‰¼í‘œë–¼ê¸° + ê³µë°
 }
 
 
-uint64_t get_integer()// ì‹¤ì œ ë©”ëª¨ë¦¬ì— ë“¤ì–´ìˆëŠ”ê°’ë„ ì½ì„ìˆ˜ìˆì–´ì•¼í•¨.!!
+uint64_t get_integer()// ½ÇÁ¦ ¸Ş¸ğ¸®¿¡ µé¾îÀÖ´Â°ªµµ ÀĞÀ»¼öÀÖ¾î¾ßÇÔ.!!
 {
-	
+
 	uint64_t D = 0;
 	char a;
-	while  (((a = fgetc(file)) != '$') && (a != '('))
+	while (((a = fgetc(file)) != '$') && (a != '('))
 	{
 		;
 	}
-	if (a == '$') // ì •ìˆ˜ì¸ê²½ìš°
+	if (a == '$') // Á¤¼öÀÎ°æ¿ì
 	{
 		fscanf_s(file, "%" PRIX64, &D);
 		return D;
 	}
-	//ë©”ëª¨ë¦¬ê°’ì¸ê²½ìš°.
-	char _reg[10] = {0,};
+	//¸Ş¸ğ¸®°ªÀÎ°æ¿ì.
+	char _reg[10] = { 0, };
 
 	int i = 0;
 	while ((a = fgetc(file)) != ')')
@@ -635,10 +637,10 @@ void read_label()
 	{
 		char __instruction[10] = { 0, };
 		const int buffer = 10;
-		int eof = fscanf_s(file ,"%s", __instruction, sizeof(__instruction));
+		int eof = fscanf_s(file, "%s", __instruction, sizeof(__instruction));
 		int ins_len = strlen(__instruction);
 
-		 if (__instruction[0] == '.')
+		if (__instruction[0] == '.')
 		{
 			int i = 0;
 			for (; i < 3; i++)
@@ -659,7 +661,7 @@ void read_label()
 			}
 			case 1: //.align
 			{
-				
+
 				address += D - (address % D);
 				break;
 			}
@@ -678,7 +680,7 @@ void read_label()
 		for (int i = 0; i < 27; i++)
 		{
 			size_t len = strlen(instruction[i]);
-			if (!strncmp(__instruction, instruction[i], len))//ê°™ì„ë•Œ 0ë°˜í™˜
+			if (!strncmp(__instruction, instruction[i], len))//°°À»¶§ 0¹İÈ¯
 			{
 				index = i;
 				break;
@@ -746,23 +748,23 @@ void read_label()
 			//80
 		case call:
 		{	char line[100];
-			fgets(line, 100, file);
-			address += 9;
-			break;
+		fgets(line, 100, file);
+		address += 9;
+		break;
 		}
 		case pushq:
 		case popq:
 		{	char line[100];
-			fgets(line, 100, file);
-			address += 2;
-			break;
+		fgets(line, 100, file);
+		address += 2;
+		break;
 		}
-		default: //ë¼ë²¨ ë¨¼ì € ë°›ë“ ì§€ ë§ë“ ì§€
+		default: //¶óº§ ¸ÕÀú ¹ŞµçÁö ¸»µçÁö
 		{
 			if (__instruction[ins_len - 1] == ':')
 			{
 				__instruction[ins_len - 1] = '\0';
-				strcpy( Label[Label_index] , __instruction);
+				strcpy(Label[Label_index], __instruction);
 				Label_address[Label_index] = address;
 				Label_index++;
 			}
@@ -783,7 +785,7 @@ void read_label()
 void del_comment()
 {
 	char a;
-	while ( ((a= fgetc(file)) != '\n') && ( a != EOF))
+	while (((a = fgetc(file)) != '\n') && (a != EOF))
 	{
 		;
 	}
