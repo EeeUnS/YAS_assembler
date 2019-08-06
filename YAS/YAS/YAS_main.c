@@ -6,8 +6,6 @@
 #include<ctype.h>
 #include<inttypes.h>
 #define Label_n 20
-//const int Label_n = 20;
-
 
 // Y86-64 -> 기계어 변환기
 
@@ -212,9 +210,7 @@ const char* reg[] =
 	"No register"
 };
 
-uint64_t reg_value[16];
-
-
+//uint64_t reg_value[16];
 
 char Label[Label_n][Label_n];
 int Label_index;
@@ -616,8 +612,13 @@ uint64_t get_integer()// 실제 메모리에 들어있는값도 읽을수있어야함.!!
 		fscanf_s(file, "%" PRIX64, &D);
 		return D;
 	}
+	//라벨이 들어갈수도있다.
+
+
+
+
 	//메모리값인경우.
-	char _reg[10] = { 0, };
+	/*char _reg[10] = { 0, };
 
 	int i = 0;
 	while ((a = fgetc(file)) != ')')
@@ -626,7 +627,7 @@ uint64_t get_integer()// 실제 메모리에 들어있는값도 읽을수있어야함.!!
 		i++;
 	}
 
-	return reg_value[find_reg(_reg)];
+	return reg_value[find_reg(_reg)];*/
 }
 
 void read_label()
