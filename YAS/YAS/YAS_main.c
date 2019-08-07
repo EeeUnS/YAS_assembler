@@ -217,21 +217,21 @@ const char* assembler_directives[] =
 	".quad"
 };
 FILE* file;
-size_t Label_index = 0;
+size_t label_index = 0;
 //uint64_t address = 0x100;
 /************************************************************************************************/
 
-char Label[Label_n][Label_n];
+char label[Label_n][Label_n];
 uint64_t Label_address[Label_n];
 
-size_t get_Label_address_index(char* __Label_address);
+size_t get_label_address_index(char* __Label_address);
 
 void insrtruction_to_encoding();
 void input_error();
 uint64_t set_little_endian(uint64_t integer);
 uint64_t get_integer();
 void fflush_line();
-void Print_Encoding_Instruction(int number);
+void print_encoding_Instruction(int number);
 int find_reg(char reg[]);
 void reg_in();
 void read_label();
@@ -246,7 +246,6 @@ int main()
 	read_label();
 	rewind(file);
 	insrtruction_to_encoding();
-
 	return 0;
 
 }
@@ -282,7 +281,7 @@ void insrtruction_to_encoding()
 		case halt:
 		case nop:
 		case ret: //90
-			Print_Encoding_Instruction(index);
+			print_encoding_Instruction(index);
 			printf("\n");
 			address += 1;
 			break;
@@ -299,7 +298,7 @@ void insrtruction_to_encoding()
 		case subq:
 		case andq:
 		case xorq:
-			Print_Encoding_Instruction(index);
+			print_encoding_Instruction(index);
 			reg_in();
 			reg_in();
 			printf("\n");
@@ -308,7 +307,7 @@ void insrtruction_to_encoding()
 			//30
 		case irmovq:  //수정
 		{
-			Print_Encoding_Instruction(index);
+			print_encoding_Instruction(index);
 			printf("F");
 			uint64_t D = get_integer(); //정수가 안들어오는경우
 			D = set_little_endian(D);
@@ -319,7 +318,7 @@ void insrtruction_to_encoding()
 		}	//40
 		case rmmovq: //수정
 		{
-			Print_Encoding_Instruction(index);
+			print_encoding_Instruction(index);
 			reg_in(); //rA
 
 
@@ -349,7 +348,7 @@ void insrtruction_to_encoding()
 		}
 		case mrmovq:  //코드 고치기.
 		{
-			Print_Encoding_Instruction(index);
+			print_encoding_Instruction(index);
 
 			char line[20] = {0,};
 
@@ -390,12 +389,12 @@ void insrtruction_to_encoding()
 		case call:
 		{	//주소값을 저장해서 출력해야됨 씹헬
 			
-			Print_Encoding_Instruction(index);
+			print_encoding_Instruction(index);
 			char __Label[20] = {0,};
 			fscanf_s(file, "%s", __Label, sizeof(__Label));
 			size_t line_len = strlen(__Label);
 			
-			size_t Label_address_index = get_Label_address_index(__Label);
+			size_t Label_address_index = get_label_address_index(__Label);
 			uint64_t __address = Label_address[Label_address_index];
 
 			__address = set_little_endian(__address);
@@ -407,7 +406,7 @@ void insrtruction_to_encoding()
 		}
 		case pushq:
 		case popq:
-			Print_Encoding_Instruction(index);
+			print_encoding_Instruction(index);
 			reg_in();
 			printf("F\n");
 			address += 2;
@@ -462,7 +461,7 @@ uint64_t set_little_endian(uint64_t integer)
 }
 
 
-void Print_Encoding_Instruction(int number)
+void print_encoding_Instruction(int number)
 {
 	if (number == halt)
 	{
@@ -542,11 +541,10 @@ uint64_t get_integer()// 실제 메모리에 들어있는값도 읽을수있어야함.!!
 	{
 		char __Label[20] = {0,};
 		fscanf_s(file, __Label, "%s"  ,sizeof(__Label));
-		return Label_address[get_Label_address_index(__Label)];
+		return Label_address[get_label_address_index(__Label)];
 	}
 	else
 	{
-
 		input_error();
 		return -1;
 	}
@@ -649,9 +647,9 @@ void read_label()
 			if (__instruction[ins_len - 1] == ':')
 			{
 				__instruction[ins_len - 1] = '\0';
-				strcpy(Label[Label_index], __instruction);
-				Label_address[Label_index] = address;
-				Label_index++;
+				strcpy(label[label_index], __instruction);
+				Label_address[label_index] = address;
+				label_index++;
 			}
 			else
 			{
@@ -730,11 +728,11 @@ uint64_t do_assembler_directives(char * __instruction, uint64_t address)
 	return address;
 }
 
-size_t get_Label_address_index(char * __Label_address)
+size_t get_label_address_index(char * __Label_address)
 {
-	for (size_t i = 0; i < Label_index; i++)
+	for (size_t i = 0; i < label_index; i++)
 	{
-		if (strcmp(__Label_address, Label[i]) == 0)
+		if (strcmp(__Label_address, label[i]) == 0)
 		{
 			return i;
 		}
