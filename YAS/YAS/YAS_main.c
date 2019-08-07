@@ -108,7 +108,6 @@ enum Instruction
 	jge,
 	jg,
 
-
 	//80
 	call,
 	ret,
@@ -210,19 +209,6 @@ const char* reg[] =
 	"No register"
 };
 
-//uint64_t reg_value[16];
-
-char Label[Label_n][Label_n];
-int Label_index;
-
-uint64_t Label_address[Label_n];
-
-void insrtruction_to_encoding();
-void input_error();
-uint64_t little_endian(uint64_t integer);
-uint64_t get_integer();
-
-void del_comment();
 
 const char* assembler_directives[] =
 {
@@ -230,293 +216,237 @@ const char* assembler_directives[] =
 	".align",
 	".quad"
 };
+FILE* file;
+size_t Label_index = 0;
+//uint64_t address = 0x100;
+/************************************************************************************************/
 
+char Label[Label_n][Label_n];
+uint64_t Label_address[Label_n];
+
+size_t get_Label_address_index(char* __Label_address);
+
+void insrtruction_to_encoding();
+void input_error();
+uint64_t set_little_endian(uint64_t integer);
+uint64_t get_integer();
+void fflush_line();
 void Print_Encoding_Instruction(int number);
 int find_reg(char reg[]);
 void reg_in();
 void read_label();
-uint64_t address = 0x100;
-FILE* file ;
+int get_instruction_index(char *__instruction);
+uint64_t do_assembler_directives(char* __instruction, uint64_t address);
 
 int main()
 {
-
 	FILE* TXT = fopen("reg.txt", "r");
 	file = TXT;
 
 	read_label();
 	rewind(file);
+	insrtruction_to_encoding();
 
-	while (!feof(file))
-	{
-		insrtruction_to_encoding();
-	}
 	return 0;
 
 }
 
 void insrtruction_to_encoding()
 {
-	char __instruction[10] = { 0, };
-	const int buffer = 10;
-	int eof = fscanf_s(file, "%s", __instruction, sizeof(__instruction));
-
-	int ins_len = strlen(__instruction);
-	// # 챙기기.
-
-	if (__instruction[0] == '#')
+	uint64_t address = 0x100;
+	while (!feof(file))
 	{
-		del_comment();
-
-
-		printf("\n");
-		return;
-	}
-	else if (__instruction[0] == '.')
-	{
-		int i = 0;
-		for (; i < 3; i++)
+		char __instruction[10] = { 0, };
+		const int instruction_buffer_size = 10;
+		int eof_check = fscanf_s(file, "%s", __instruction, sizeof(__instruction));
+		// # 챙기기.
+		if (__instruction[0] == '#')
 		{
-			if (strcmp(__instruction, assembler_directives[i]) == 0)
-			{
-				break;
-			}
-		}
-		uint64_t D;
-		fscanf_s(file, "%" PRIX64, &D);
-		switch (i)
-		{
-		case 0: // .pos
-		{
-			address = D;
-			printf("0x%" PRIX64 " : \n", address);
-			break;
-		}
-		case 1: //.align
-		{
-			address += D - (address % D);
-			printf("0x%" PRIX64" : \n", address);
-			break;
-		}
-		case 2: //quad
-		{
-			//??
-			break;
-		}
-		default://??
-			break;
-		}
-		return;
-	}
-
-	int index = 28;
-	for (int i = 0; i < 27; i++)
-	{
-		size_t len = strlen(instruction[i]);
-		if (!strncmp(__instruction, instruction[i], len))//같을때 0반환
-		{
-			index = i;
-			break;
-		}
-	}
-	printf("0x%" PRIX64 " : ", address);
-	switch (index)
-	{
-
-	case halt:
-	case nop:
-	case ret: //90
-		Print_Encoding_Instruction(index);
-		printf("\n");
-		address += 1;
-		break;
-		//20
-	case rrmovq:
-	case cmovle:
-	case cmovl:
-	case cmove:
-	case cmovne:
-	case cmovge:
-	case cmovg:
-		//60
-	case addq:
-	case subq:
-	case andq:
-	case xorq:
-		Print_Encoding_Instruction(index);
-		reg_in();
-		reg_in();
-		printf("\n");
-		address += 2;
-		break;
-		//30
-	case irmovq:  //수정
-	{
-		Print_Encoding_Instruction(index);
-		printf("F");
-
-		uint64_t D = get_integer(); //정수가 안들어오는경우
-		D = little_endian(D);
-
-
-		reg_in();
-		printf("%08" PRIX64 "\n", D);
-		address += 10;
-		break;
-	}	//40
-	case rmmovq: //수정
-	{
-		Print_Encoding_Instruction(index);
-		reg_in(); //rA
-
-
-		char line[20];
-
-		fscanf_s(file, "%s", line, sizeof(line)); //(%s입력)
-		uint64_t D = atoi(line);
-
-		int i = 0;
-		for (; line[i] != '('; i++)
-		{
-			;
-		}
-		char rB[5] = { 0, };
-		for (int j = 0; line[i] != ')'; j++, i++)
-		{
-			rB[j] = line[i]; //  line에 (를 읽기때문에 index 는 1부터. 이게아니면 인풋값에러임
-		}
-		int rB_index = find_reg(rB);
-
-		printf("%X", rB_index);
-
-		printf("%08" PRIx64 "\n", D);
-
-		address += 10;
-		break;
-	}
-	case mrmovq:
-	{
-		Print_Encoding_Instruction(index);
-
-		char line[20];
-
-		fscanf_s(file, "%s", line, sizeof(line)); //(%s입력)
-		uint64_t D = atoi(line);
-
-		int i = 0;
-		for (; line[i] != '('; i++)
-		{
-			;
-		}
-		char rB[5] = { 0, };
-		i++;
-		for (int j = 0; line[i] != ')'; j++, i++)
-		{
-			rB[j] = line[i]; //  line에 (를 읽기때문에 index 는 1부터. 이게아니면 인풋값에러임
-		}
-
-
-		int rB_index = find_reg(rB);
-
-		reg_in();
-		printf("%X", rB_index);
-		printf("%08" PRIx64 "\n", D);
-
-		address += 10;
-		break;
-	}
-	//70
-	case jmp:
-	case jle:
-	case jl:
-	case je:
-	case jne:
-	case jge:
-	case jg:
-		//80
-	case call:
-	{	//주소값을 저장해서 출력해야됨 씹헬
-		Print_Encoding_Instruction(index);
-		char line[20];
-		fscanf_s(file, "%s", line, sizeof(line));
-		int line_len = strlen(line);
-
-		/*__instruction[ins_len - 1] = '\0';
-		strcpy(Label[Label_index], __instruction);
-		Label_address[Label_index] = address;
-		Label_index++;*/
-		line[line_len] = '\0';
-		int i = 0;
-		for (; i < Label_index; i++)
-		{
-			if (strcmp(line, Label[i]) == 0)
-			{
-				break;
-			}
-		}
-
-		if (i == Label_index)
-		{
-			input_error();
-			return;
-		}
-		uint64_t _address = Label_address[i];
-		_address = little_endian(_address);
-		printf("%08" PRIx64, _address);
-		printf("\n");
-
-		address += 9;
-		break;
-	}
-	case pushq:
-	case popq:
-		Print_Encoding_Instruction(index);
-		reg_in();
-		printf("F\n");
-		address += 2;
-		break;
-	default: //라벨 or 인풋 에러
-	{
-		if (__instruction[ins_len - 1] == ':')
-		{
-			/*__instruction[ins_len - 1] = '\0';
-			strcpy(Label[Label_index], __instruction);
-			Label_address[Label_index] = address;
-			Label_index++;*/
+			fflush_line();
 			printf("\n");
+			continue;
 		}
-		else
+		// 어셈블러 지시자 처리
+		else if (__instruction[0] == '.')
 		{
-			if (eof == -1)
-			{
-				return;
-			}
-			char line[6];
-			fscanf_s(file, "%s", line, sizeof(line));
-
-			//input_error();
+			address = do_assembler_directives(__instruction, address);
+			printf("0x%" PRIX64" : \n", address);
+			continue;
 		}
+		printf("0x%" PRIX64 " : ", address);
+
+		int index = get_instruction_index(__instruction);
+		switch (index)
+		{
+
+		case halt:
+		case nop:
+		case ret: //90
+			Print_Encoding_Instruction(index);
+			printf("\n");
+			address += 1;
+			break;
+			//20
+		case rrmovq:
+		case cmovle:
+		case cmovl:
+		case cmove:
+		case cmovne:
+		case cmovge:
+		case cmovg:
+			//60
+		case addq:
+		case subq:
+		case andq:
+		case xorq:
+			Print_Encoding_Instruction(index);
+			reg_in();
+			reg_in();
+			printf("\n");
+			address += 2;
+			break;
+			//30
+		case irmovq:  //수정
+		{
+			Print_Encoding_Instruction(index);
+			printf("F");
+			uint64_t D = get_integer(); //정수가 안들어오는경우
+			D = set_little_endian(D);
+			reg_in();
+			printf("%08" PRIX64 "\n", D);
+			address += 10;
+			break;
+		}	//40
+		case rmmovq: //수정
+		{
+			Print_Encoding_Instruction(index);
+			reg_in(); //rA
 
 
-		//printf("\n");
+			char line[20] = {0,};
+
+			fscanf_s(file, "%s", line, sizeof(line)); //(%s입력)
+			uint64_t D = atoi(line);
+
+			int i = 0;
+			for (; line[i] != '('; i++)
+			{
+				;
+			}
+			char rB[5] = { 0, };
+			for (int j = 0; line[i] != ')'; j++, i++)
+			{
+				rB[j] = line[i]; //  line에 (를 읽기때문에 index 는 1부터. 이게아니면 인풋값에러임
+			}
+			int rB_index = find_reg(rB);
+
+			printf("%X", rB_index);
+
+			printf("%08" PRIx64 "\n", D);
+
+			address += 10;
+			break;
+		}
+		case mrmovq:  //코드 고치기.
+		{
+			Print_Encoding_Instruction(index);
+
+			char line[20] = {0,};
+
+			fscanf_s(file, "%s", line, sizeof(line)); //(%s입력)
+			uint64_t D = atoi(line);
+
+			int i = 0;
+			for (; line[i] != '('; i++)
+			{
+				;
+			}
+			char rB[5] = { 0, };
+			i++;
+			for (int j = 0; line[i] != ')'; j++, i++)
+			{
+				rB[j] = line[i]; //  line에 (를 읽기때문에 index 는 1부터. 이게아니면 인풋값에러임
+			}
 
 
-		break;
+			int rB_index = find_reg(rB);
+
+			reg_in();
+			printf("%X", rB_index);
+			printf("%08" PRIx64 "\n", D);
+
+			address += 10;
+			break;
+		}
+		//70
+		case jmp:
+		case jle:
+		case jl:
+		case je:
+		case jne:
+		case jge:
+		case jg:
+			//80
+		case call:
+		{	//주소값을 저장해서 출력해야됨 씹헬
+			
+			Print_Encoding_Instruction(index);
+			char __Label[20] = {0,};
+			fscanf_s(file, "%s", __Label, sizeof(__Label));
+			size_t line_len = strlen(__Label);
+			
+			size_t Label_address_index = get_Label_address_index(__Label);
+			uint64_t __address = Label_address[Label_address_index];
+
+			__address = set_little_endian(__address);
+			printf("%08" PRIx64, __address);
+			printf("\n");
+
+			address += 9;
+			break;
+		}
+		case pushq:
+		case popq:
+			Print_Encoding_Instruction(index);
+			reg_in();
+			printf("F\n");
+			address += 2;
+			break;
+		default: //라벨 or 인풋 에러
+		{
+			int ins_len = strlen(__instruction);
+			if (__instruction[ins_len - 1] == ':')
+			{
+				printf("\n");
+			}
+			else
+			{
+				if (eof_check == -1)
+				{
+					return;
+				}
+				/*char line[6];
+				fscanf_s(file, "%s", line, sizeof(line));*/
+
+				input_error();
+			}
+
+			break;
+		}
+		}
+		fflush_line();
 	}
-	}
-	del_comment();
 }
+
+
 void input_error()
 {
 	printf("input error");
 	exit(-1);
 	return;
 }
-//irmovq 0x12345678 %rdi
 
-
-
-uint64_t little_endian(uint64_t integer)
+uint64_t set_little_endian(uint64_t integer)
 {
 	uint64_t num = integer;
 	uint64_t intreturn = 0;
@@ -554,11 +484,6 @@ int find_reg(char _reg[])
 			return index;
 		}
 	} // 상수값 $8g
-
-
-
-
-
 	input_error();
 	return -1;
 }
@@ -603,7 +528,7 @@ uint64_t get_integer()// 실제 메모리에 들어있는값도 읽을수있어야함.!!
 
 	uint64_t D = 0;
 	char a;
-	while (((a = fgetc(file)) != '$') && (a != '('))
+	while (isspace(a= fgetc(file)))   //(((a = fgetc(file)) != '$') && (!isalpha(a)))
 	{
 		;
 	}
@@ -613,21 +538,18 @@ uint64_t get_integer()// 실제 메모리에 들어있는값도 읽을수있어야함.!!
 		return D;
 	}
 	//라벨이 들어갈수도있다.
-
-
-
-
-	//메모리값인경우.
-	/*char _reg[10] = { 0, };
-
-	int i = 0;
-	while ((a = fgetc(file)) != ')')
+	else if (isalpha(a))
 	{
-		_reg[i] = a;
-		i++;
+		char __Label[20] = {0,};
+		fscanf_s(file, __Label, "%s"  ,sizeof(__Label));
+		return Label_address[get_Label_address_index(__Label)];
 	}
+	else
+	{
 
-	return reg_value[find_reg(_reg)];*/
+		input_error();
+		return -1;
+	}
 }
 
 void read_label()
@@ -637,56 +559,16 @@ void read_label()
 	while (!feof(file))
 	{
 		char __instruction[10] = { 0, };
-		const int buffer = 10;
+		const int instruction_buffer_size = 10;
 		int eof = fscanf_s(file, "%s", __instruction, sizeof(__instruction));
-		int ins_len = strlen(__instruction);
 
 		if (__instruction[0] == '.')
 		{
-			int i = 0;
-			for (; i < 3; i++)
-			{
-				if (strcmp(__instruction, assembler_directives[i]) == 0)
-				{
-					break;
-				}
-			}
-			uint64_t D = 1;
-			fscanf_s(file, "%" PRIX64, &D);
-			switch (i)
-			{
-			case 0: // .pos
-			{
-				address = D;
-				break;
-			}
-			case 1: //.align
-			{
-
-				address += D - (address % D);
-				break;
-			}
-			case 2: //quad
-			{
-				//??
-				break;
-			}
-			default://??
-				break;
-			}
+			address = do_assembler_directives(__instruction, address);
 			continue;
 		}
+		int index = get_instruction_index(__instruction);
 
-		int index = 28;
-		for (int i = 0; i < 27; i++)
-		{
-			size_t len = strlen(instruction[i]);
-			if (!strncmp(__instruction, instruction[i], len))//같을때 0반환
-			{
-				index = i;
-				break;
-			}
-		}
 		switch (index)
 		{
 		case halt:
@@ -762,6 +644,8 @@ void read_label()
 		}
 		default: //라벨 먼저 받든지 말든지
 		{
+			int ins_len = strlen(__instruction);
+
 			if (__instruction[ins_len - 1] == ':')
 			{
 				__instruction[ins_len - 1] = '\0';
@@ -779,15 +663,82 @@ void read_label()
 			}
 		}
 		}
-		del_comment();
+		fflush_line();
 	}
 }
 
-void del_comment()
+int get_instruction_index(char* __instruction)
+{
+	for (int i = 0; i < 27; i++)
+	{
+		size_t len = strlen(instruction[i]);
+		if (!strncmp(__instruction, instruction[i], len))//같을때 0반환
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+void fflush_line()
 {
 	char a;
 	while (((a = fgetc(file)) != '\n') && (a != EOF))
 	{
 		;
 	}
+}
+
+
+uint64_t do_assembler_directives(char * __instruction, uint64_t address)
+{
+
+	int i = 0;
+	for (; i < 3; i++)
+	{
+		if (strcmp(__instruction, assembler_directives[i]) == 0)
+		{
+			break;
+		}
+	}
+	uint64_t D;
+	fscanf_s(file, "%" PRIX64, &D);
+	switch (i)
+	{
+	case 0: // .pos
+	{
+		address = D;
+		break;
+	}
+	case 1: //.align
+	{
+		if (address % D)
+		{
+			address += D - (address % D);
+		}
+		break;
+	}
+	case 2: //quad
+	{
+		//??
+		break;
+	}
+	default://??
+		break;
+	}
+	return address;
+}
+
+size_t get_Label_address_index(char * __Label_address)
+{
+	for (size_t i = 0; i < Label_index; i++)
+	{
+		if (strcmp(__Label_address, Label[i]) == 0)
+		{
+			return i;
+		}
+	}
+	input_error();
+	return -1;
 }

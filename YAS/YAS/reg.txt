@@ -10,6 +10,9 @@ stop:
 	andq %rsi, %rsi #sum(array, 4)
 	jmp test  # sum(array, 4)
 .align 8
+# Execution begins at address 0
+# Execution begins at address 0
+# Execution begins at address 0
 test: # Constant 8
 	mrmovq (%rdi) ,%r10
 	ret # Constant 8
