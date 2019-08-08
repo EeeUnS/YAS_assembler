@@ -12,10 +12,7 @@
 /*
 스페이스바, 개행문자를 기준으로 읽기때문에
 주석, 인스트럭션 ,레지스터들 사이에는 스페이스바가 하나씩을 들어가야합니다.
-
 */
-
-
 
 /*
 
@@ -224,7 +221,7 @@ size_t label_index = 0;
 char label[Label_n][Label_n];
 uint64_t Label_address[Label_n];
 
-size_t get_label_address_index(char* __Label_address);
+size_t get_label_address(char* __Label_address);
 
 void insrtruction_to_encoding();
 void input_error();
@@ -394,8 +391,7 @@ void insrtruction_to_encoding()
 			fscanf_s(file, "%s", __Label, sizeof(__Label));
 			size_t line_len = strlen(__Label);
 			
-			size_t Label_address_index = get_label_address_index(__Label);
-			uint64_t __address = Label_address[Label_address_index];
+			uint64_t __address = get_label_address(__Label);
 
 			__address = set_little_endian(__address);
 			printf("%08" PRIx64, __address);
@@ -541,7 +537,7 @@ uint64_t get_integer()// 실제 메모리에 들어있는값도 읽을수있어야함.!!
 	{
 		char __Label[20] = {0,};
 		fscanf_s(file, __Label, "%s"  ,sizeof(__Label));
-		return Label_address[get_label_address_index(__Label)];
+		return get_label_address(__Label);
 	}
 	else
 	{
@@ -728,13 +724,13 @@ uint64_t do_assembler_directives(char * __instruction, uint64_t address)
 	return address;
 }
 
-size_t get_label_address_index(char * __Label_address)
+size_t get_label_address(char * __Label_address)
 {
 	for (size_t i = 0; i < label_index; i++)
 	{
 		if (strcmp(__Label_address, label[i]) == 0)
 		{
-			return i;
+			return Label_address[i];
 		}
 	}
 	input_error();
